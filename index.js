@@ -24,11 +24,37 @@ async function run() {
 		await client.connect();
 		const databse = client.db("volunteerNetwork");
 		const eventsCollection = databse.collection("events");
+		const registerCollection = databse.collection("register");
 
-		// post api
+		// list api [EVENT]
+		app.get("/events", async (req, res) => {
+			const cursor = eventsCollection.find({});
+			const page = parseInt(req.query.page);
+			const size = parseInt(req.query.size);
+			const count = await cursor.count();
+			let result;
+			if (page) {
+				result = await cursor
+					.skip(page * size)
+					.limit(size)
+					.toArray();
+			} else {
+				result = await cursor.toArray();
+			}
+			res.send({ count, result });
+		});
+
+		// post api [EVENT]
 		app.post("/events", async (req, res) => {
 			const newEvent = req.body;
 			const result = await eventsCollection.insertOne(newEvent);
+			res.send(result);
+		});
+
+		// post api [REGISTER]
+		app.post("/register", async (req, res) => {
+			const newRegister = req.body;
+			const result = await registerCollection.insertOne(newRegister);
 			res.send(result);
 		});
 	} finally {
